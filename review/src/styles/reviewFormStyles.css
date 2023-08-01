@@ -1,0 +1,28 @@
+/* src/styles/reviewFormStyles.css */
+
+.container {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  
+  .form-box {
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #000000;
+    border-radius: 8px;
+  }
+  
+  .form-box h5 {
+    margin-bottom: 10px;
+  }
+  
+  .form-box form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .form-box form button {
+    align-self: flex-end;
+  }
+  
