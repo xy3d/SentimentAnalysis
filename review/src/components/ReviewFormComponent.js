@@ -1,5 +1,5 @@
-import React from "react";
-import { TextField, Button, Box, Typography, Container } from "@mui/material";
+import React, { useState } from "react";
+import { TextField, Button, Box, Typography, Container, Snackbar } from "@mui/material";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as yup from "yup";
 import useReviewState from "../state/useReviewState";
@@ -9,16 +9,32 @@ import "../styles/reviewFormStyles.css";
 
 const ReviewFormComponent = () => {
   const { reviewText, setReviewText, rating, setRating, userName, setUserName } = useReviewState();
+  const [submitStatus, setSubmitStatus] = useState(null);
 
-  const handleSubmit = (values, { resetForm }) => {
-    handleSubmitReview(api, values);
-    resetForm();
+  const handleSubmit = async (values, { resetForm }) => {
+    try {
+      await handleSubmitReview(api, values);
+      resetForm();
+      setSubmitStatus("success");
+    } catch (error) {
+      setSubmitStatus("error");
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSubmitStatus(null);
   };
 
   const validationSchema = yup.object({
-    reviewText: yup.string().required("Review is required"),
-    rating: yup.number().required("Rating is required").min(1, "Rating must be at least 1").max(5, "Rating can't exceed 5"),
-    userName: yup.string().required("User Name is required"),
+    reviewText: yup.string().required("Review is required").matches(/^[A-Za-z0-9\s.,!?']+$/, "Only text, special characters, and symbols are allowed"),
+    rating: yup
+      .number()
+      .required("Rating is required")
+      .typeError("Rating must be a number")
+      .integer("Rating must be an integer")
+      .min(1, "Rating must be at least 1")
+      .max(5, "Rating can't exceed 5"),
+    userName: yup.string().required("User Name is required").matches(/^[A-Za-z0-9]+$/, "Only alpha-numeric characters are allowed"),
   });
 
   return (
@@ -88,6 +104,12 @@ const ReviewFormComponent = () => {
           )}
         </Formik>
       </Box>
+      <Snackbar
+        open={submitStatus === "success" || submitStatus === "error"}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        message={submitStatus === "success" ? "Review submitted successfully!" : "Failed to submit review. Please try again."}
+      />
     </Container>
   );
 };

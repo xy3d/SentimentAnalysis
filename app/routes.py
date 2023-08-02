@@ -1,8 +1,8 @@
 # routes.py
 from flask import request, jsonify
-from textblob import TextBlob
 from . import app
 from .db import reviews_collection
+from .analysis import analyze_sentiment
 
 @app.route("/api/reviews", methods=["POST"])
 def save_review():
@@ -19,17 +19,8 @@ def save_review():
     }
     inserted_review = reviews_collection.insert_one(review_data)
 
-    # Perform sentiment analysis using TextBlob
-    blob = TextBlob(review_text)
-    sentiment_score = blob.sentiment.polarity
-
-    # Classify sentiment
-    if sentiment_score > 0:
-        sentiment = "positive"
-    elif sentiment_score < 0:
-        sentiment = "negative"
-    else:
-        sentiment = "neutral"
+    # Perform sentiment analysis using the imported analyze_sentiment function
+    sentiment, sentiment_score = analyze_sentiment(review_text)
 
     # Update the "sentiment" and "sentiment_score" columns for the inserted review
     reviews_collection.update_one(
