@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { TextField, Button, Box, Typography, Container, Snackbar } from "@mui/material";
+import { TextField, Button, Box, Typography, Container, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress, Grid, Snackbar } from "@mui/material";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as yup from "yup";
+import { Rating } from "@mui/material";
 import useReviewState from "../state/useReviewState";
 import api from "../service/api";
 import { handleSubmitReview } from "../utils/reviewUtils";
@@ -9,20 +10,38 @@ import "../styles/reviewFormStyles.css";
 
 const ReviewFormComponent = () => {
   const { reviewText, setReviewText, rating, setRating, userName, setUserName } = useReviewState();
-  const [submitStatus, setSubmitStatus] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [alertSeverity, setAlertSeverity] = useState("success");
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   const handleSubmit = async (values, { resetForm }) => {
     try {
+      setLoading(true);
       await handleSubmitReview(api, values);
+      setLoading(false);
       resetForm();
-      setSubmitStatus("success");
+      setDialogMessage("Review submitted successfully!");
+      setAlertSeverity("success");
+      setDialogOpen(true);
     } catch (error) {
-      setSubmitStatus("error");
+      setLoading(false);
+      setDialogMessage("Failed to submit review. Please try again.");
+      setAlertSeverity("error");
+      setDialogOpen(true);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    if (alertSeverity === "success") {
+      setSnackbarOpen(true);
     }
   };
 
   const handleCloseSnackbar = () => {
-    setSubmitStatus(null);
+    setSnackbarOpen(false);
   };
 
   const validationSchema = yup.object({
@@ -66,21 +85,21 @@ const ReviewFormComponent = () => {
               />
               <ErrorMessage name="reviewText" component="div" className="error-message" />
 
-              <Field
-                as={TextField}
-                label="Rating"
-                type="number"
-                fullWidth
-                name="rating"
-                value={values.rating}
-                onChange={(e) => {
-                  handleChange(e);
-                  setRating(e.target.value);
-                }}
-                variant="outlined"
-                margin="normal"
-              />
-              <ErrorMessage name="rating" component="div" className="error-message" />
+              <Grid container alignItems="center">
+                <Grid item xs={6}>
+                  <Typography component="legend">Rating:</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Rating
+                    name="rating"
+                    value={values.rating}
+                    onChange={(event, newValue) => {
+                      handleChange(event);
+                      setRating(newValue);
+                    }}
+                  />
+                </Grid>
+              </Grid>
 
               <Field
                 as={TextField}
@@ -97,19 +116,26 @@ const ReviewFormComponent = () => {
               />
               <ErrorMessage name="userName" component="div" className="error-message" />
 
-              <Button type="submit" variant="contained" color="primary">
+              <Button type="submit" variant="contained" color="primary" disabled={loading}>
                 Submit Review
               </Button>
+
+              {loading && <CircularProgress />}
             </Form>
           )}
         </Formik>
       </Box>
-      <Snackbar
-        open={submitStatus === "success" || submitStatus === "error"}
-        autoHideDuration={3000}
-        onClose={handleCloseSnackbar}
-        message={submitStatus === "success" ? "Review submitted successfully!" : "Failed to submit review. Please try again."}
-      />
+      <Dialog open={dialogOpen} onClose={handleCloseDialog}>
+        <DialogTitle>{dialogMessage}</DialogTitle>
+        <DialogContent>
+          <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleCloseSnackbar} message={dialogMessage} />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog} color="primary" autoFocus>
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
