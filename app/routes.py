@@ -1,8 +1,8 @@
 # routes.py
 from flask import request, jsonify
-from . import app
+from app import app
 from .db import reviews_collection
-from .analysis import analyze_sentiment
+from app.transformers import analyze_sentiment
 
 @app.route("/api/reviews", methods=["POST"])
 def save_review():
